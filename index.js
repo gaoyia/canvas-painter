@@ -76,16 +76,14 @@ function drawLine(x1, y1, x2, y2) {
 
 function getLineWidth(e) {
   switch (e.pointerType) {
-    case "touch": {
-      if (e.width < 10 && e.height < 10) {
-        return (e.width + e.height) * 2 + 10;
-      } else {
-        return (e.width + e.height - 40) / 2;
-      }
+    case 'touch': {
+      // 用面积算，保底 4 px
+      const area = e.width + e.height;
+      return area < 20 ? area * 2 + 10 : Math.max(4, (area - 40) / 2);
     }
-    case "pen":
-      return e.pressure * 8;
+    case 'pen':
+      return Math.max(1, e.pressure * 8);
     default:
-      return e.pressure ? e.pressure * 8 : 4;
+      return Math.max(1, e.pressure * 8) || 4;
   }
 }
