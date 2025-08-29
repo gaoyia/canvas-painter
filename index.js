@@ -75,15 +75,53 @@ function drawLine(x1, y1, x2, y2) {
 }
 
 function getLineWidth(e) {
+  let raw, width;
+
   switch (e.pointerType) {
     case 'touch': {
-      // 用面积算，保底 4 px
-      const area = e.width + e.height;
-      return area < 20 ? area * 2 + 10 : Math.max(4, (area - 40) / 2);
+      raw = e.width + e.height;                // 原始面积
+      width = Math.max(0.5, raw * 0.25);       // 计算后线宽
+      break;
     }
-    case 'pen':
-      return Math.max(1, e.pressure * 8);
-    default:
-      return Math.max(1, e.pressure * 8) || 4;
+    case 'pen': {
+      raw = e.pressure;                        // 原始压感
+      width = raw * 6;                         // 计算后线宽
+      break;
+    }
+    default: {
+      raw = e.pressure ?? 0;                   // 原始压感（无压感为 0）
+      width = raw ? raw * 6 : 1;               // 计算后线宽
+      break;
+    }
   }
+
+  log(`raw=${raw.toFixed(2)}  width=${width.toFixed(2)}`);
+  return width;
+}
+function log(...args) {
+  const pre = document.getElementById('__log') || (() => {
+    const dom = document.createElement('pre');
+    dom.id = '__log';
+    Object.assign(dom.style, {
+      position: 'fixed',
+      top: '4px',
+      right: '4px',
+      margin: 0,
+      padding: '4px 6px',
+      background: 'rgba(0,0,0,0.65)',
+      color: '#fff',
+      fontSize: '12px',
+      lineHeight: 1.2,
+      maxHeight: '90vh',
+      overflow: 'auto',
+      pointerEvents: 'none',
+      zIndex: 9999
+    });
+    document.body.appendChild(dom);
+    return dom;
+  })();
+  // 追加一行，保留最近 100 条
+  pre.append(`${args.join(' ')}\n`);
+  pre.scrollTop = pre.scrollHeight;
+  [...pre.childNodes].slice(0, -100).forEach(n => n.remove());
 }
