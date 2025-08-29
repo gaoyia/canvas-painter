@@ -24,7 +24,6 @@ for (let i = 0; i < colorArray.length; i++) {
   li.style.background = colorArray[i];
   colorList.appendChild(li);
 }
-let isMobile = "ontouchstart" in document.documentElement;
 
 let ctx = canvas.getContext("2d");
 ctx.lineWidth = 4;
@@ -33,33 +32,26 @@ ctx.strokeStyle = "#f52443";
 let isDrawing = false;
 let last;
 
-if (isMobile) {
-  canvas.ontouchstart = (e) => {
-    last = [e.touches[0].clientX, e.touches[0].clientY];
-  };
-  canvas.ontouchmove = (e) => {
-    drawLine(last[0], last[1], e.touches[0].clientX, e.touches[0].clientY);
-    last = [e.touches[0].clientX, e.touches[0].clientY];
-  };
-} else {
-  canvas.onpointermove = (e) => {
-    ctx.lineWidth = getLineWidth(e);
-    if (isDrawing) {
-      drawLine(last[0], last[1], e.clientX, e.clientY);
-      last = [e.clientX, e.clientY];
-    }
-  };
+// 1. 删掉原来只给桌面用的 PointerEvent 判断
+// 2. 直接把 canvas 换成 PointerEvent，所有环境都能用
+canvas.onpointerdown = (e) => {
+  isDrawing = true;
+  last = [e.clientX, e.clientY];
+  ctx.lineWidth = getLineWidth(e);   // 初始粗细也按压力算
+};
 
-  canvas.onpointerdown = (e) => {
-    isDrawing = true;
-    last = [e.clientX, e.clientY];
-  };
+canvas.onpointermove = (e) => {
+  if (!isDrawing) return;
+  ctx.lineWidth = getLineWidth(e);   // 实时粗细
+  drawLine(last[0], last[1], e.clientX, e.clientY);
+  last = [e.clientX, e.clientY];
+};
 
-  canvas.onpointerup = () => {
-    isDrawing = false;
-  };
-}
-
+canvas.onpointerup = () => {
+  isDrawing = false;
+};
+// 3. 让移动端也能用 preventDefault 防滚动
+canvas.addEventListener('pointerdown', e => e.preventDefault(), { passive: false });
 // 清空画布
 clearBtn.addEventListener("click", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
